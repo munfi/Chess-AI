@@ -51,6 +51,8 @@ public class Game : MonoBehaviour
 
     private int[] myMoves;
 
+    private int[] squareMap;
+
     public string yourTurn = "White";
 
     public int lastWhiteKingPos = 60;
@@ -80,9 +82,14 @@ public class Game : MonoBehaviour
     {
 
         botMoves = new int[32];
+
+        squareMap = new int[64];
+
         bottomText.text = "White's turn";
         moreInfo.text = "turn " + turnNum;
-        gameStateText.text = "0";
+        gameStateText.text = "position evaluation";
+        depthText.text = "Depth: " + depth;
+        positionsText.text = "press b to generate a move";
 
         Square = new int[64];
 
@@ -157,6 +164,78 @@ public class Game : MonoBehaviour
         pieceValues[31] = -9;
         pieceValues[32] = -1000;
 
+        squareMap[0] = 0;
+        squareMap[1] = 1;
+        squareMap[2] = 2;
+        squareMap[3] = 3;
+        squareMap[4] = 3;
+        squareMap[5] = 2;
+        squareMap[6] = 1;
+        squareMap[7] = 0;
+
+        squareMap[8] = 0;
+        squareMap[9] = 1;
+        squareMap[10] = 2;
+        squareMap[11] = 3;
+        squareMap[12] = 3;
+        squareMap[13] = 2;
+        squareMap[14] = 1;
+        squareMap[15] = 0;
+
+        squareMap[16] = 1;
+        squareMap[17] = 2;
+        squareMap[18] = 4;
+        squareMap[19] = 5;
+        squareMap[20] = 5;
+        squareMap[21] = 4;
+        squareMap[22] = 2;
+        squareMap[23] = 1;
+
+        squareMap[24] = 1;
+        squareMap[25] = 3;
+        squareMap[26] = 5;
+        squareMap[27] = 9;
+        squareMap[28] = 9;
+        squareMap[29] = 5;
+        squareMap[30] = 3;
+        squareMap[31] = 1;
+
+        squareMap[32] = 1;
+        squareMap[33] = 3;
+        squareMap[34] = 5;
+        squareMap[35] = 9;
+        squareMap[36] = 9;
+        squareMap[37] = 5;
+        squareMap[38] = 3;
+        squareMap[39] = 1;
+
+        squareMap[40] = 1;
+        squareMap[41] = 2;
+        squareMap[42] = 4;
+        squareMap[43] = 5;
+        squareMap[44] = 5;
+        squareMap[45] = 4;
+        squareMap[46] = 2;
+        squareMap[47] = 1;
+
+        squareMap[48] = 0;
+        squareMap[49] = 1;
+        squareMap[50] = 2;
+        squareMap[51] = 3;
+        squareMap[52] = 3;
+        squareMap[53] = 2;
+        squareMap[54] = 1;
+        squareMap[55] = 0;
+
+        squareMap[56] = 0;
+        squareMap[57] = 1;
+        squareMap[58] = 2;
+        squareMap[59] = 3;
+        squareMap[60] = 3;
+        squareMap[61] = 2;
+        squareMap[62] = 1;
+        squareMap[63] = 0;
+
     }
 
     // Update is called once per frame
@@ -164,24 +243,58 @@ public class Game : MonoBehaviour
     {
         if (Input.GetKeyDown("b"))
         {
-            if(yourTurn == "White")
+            
+            if(yourTurn == "Black")
             {
-                Debug.Log("function output white:" + pickMove(0,0,1));
+                pickMove(0, 0, -1, -9999, 9999);
                 sendingIt();
             }
-            else
-            {
-                Debug.Log("function output black:" + pickMove(0, 0, -1));
-                sendingIt();
-            }
+            depthText.text = "depth: " + depth;
+            positionsText.text = "Positions checked: " + movesChecked;
+            movesChecked = 0;
             
         }
         if (Input.GetKeyDown("i"))
         {
             StartGame();
         }
-        
-        
+
+        if (Input.GetKeyDown("w"))
+        {
+            if(yourTurn == "White")
+            {
+                pickMove(0,0,1, -9999, 9999);
+                sendingIt();
+            }
+            depthText.text = "depth: " + depth;
+            positionsText.text = "Positions checked: " + movesChecked;
+            movesChecked = 0;
+        }
+
+        if (Input.GetKeyDown("space"))
+        {
+
+            if (yourTurn == "Black")
+            {
+                pickMove(0, 0, -1, -9999, 9999);
+            }
+            else
+            {
+                pickMove(0, 0, 1, -9999, 9999);
+            }
+            sendingIt();
+            depthText.text = "depth: " + depth;
+            positionsText.text = "Positions checked: " + movesChecked;
+            movesChecked = 0;
+
+        }
+
+        if (Input.GetKeyDown("l"))
+        {
+            Debug.Log(blackKing.transform.position);
+        }
+
+
     }
 
     void StartGame()
@@ -255,7 +368,7 @@ public class Game : MonoBehaviour
             moreInfo.text = "turn " + turnNum;
         }
 
-        gameStateText.text = "gamestate: "+ evaluatePos();
+        gameStateText.text = "gamestate: " + evaluatePos();
     }
 
     public bool myTurn(string color)
@@ -322,13 +435,13 @@ public class Game : MonoBehaviour
         return myTuple;
     }
 
-    public bool inCheck()
+    public bool inCheck(string team)
     {
         checkTest = new int[32];
 
         for(int x = 0; x < 64; x++)
         {
-            if((Square[x] > 0) && ((yourTurn == "White" && Square[x] >= 17) || (yourTurn == "Black" && Square[x] < 17)))
+            if((Square[x] > 0) && ((team == "White" && Square[x] >= 17) || (team == "Black" && Square[x] < 17)))
             {
                 checkTest = LegalMoves(x);
                 int checkCheck = 0;
@@ -363,7 +476,7 @@ public class Game : MonoBehaviour
                 while(myMoves[countMe] != 69)
                 {
                     UpdateList(x, myMoves[countMe]);
-                    if (!(inCheck()))
+                    if (!(inCheck(yourTurn)))
                     {
                         inCheckMate = false;
                     }
@@ -378,7 +491,6 @@ public class Game : MonoBehaviour
             }
 
         }
-        Debug.Log("checkmate returned: " + inCheckMate);
         return inCheckMate;
 
     }
@@ -417,9 +529,8 @@ public class Game : MonoBehaviour
 
         //next, tests if the moves puts you in check. Resets to the previous if so.
 
-        if (inCheck())
+        if (inCheck(yourTurn))
         {
-            Debug.Log("inCheck returned true");
 
             matchLists(0);
 
@@ -430,7 +541,6 @@ public class Game : MonoBehaviour
 
             return false;
         }
-        Debug.Log("inCheck returned false");
 
         if (attackedSquare > -1)
         {
@@ -445,7 +555,7 @@ public class Game : MonoBehaviour
 
         nextTurn();
 
-        if (inCheck())
+        if (inCheck(yourTurn))
         {
             if (checkMate())
             {
@@ -482,7 +592,7 @@ public class Game : MonoBehaviour
         //white pawns ----------------------------------------------------------------------------------------------------------------------------------------------------
         if (piece >= 1 && piece <= 8)
         {
-            if(!(isAttack(lastPos - 8,Square[lastPos]).Item1))
+            if(row != 0 && !(isAttack(lastPos - 8,Square[lastPos]).Item1))
             {
                 moves[countMoves] = lastPos - 8;
                 countMoves++;
@@ -495,13 +605,13 @@ public class Game : MonoBehaviour
                 countMoves++;
             }
 
-            if(isAttack(lastPos - 7, Square[lastPos]).Item1 && !(isAttack(lastPos - 7, Square[lastPos]).Item2) && column != 7)
+            if(row != 0 && isAttack(lastPos - 7, Square[lastPos]).Item1 && !(isAttack(lastPos - 7, Square[lastPos]).Item2) && column != 7)
             {
                 moves[countMoves] = lastPos - 7;
                 countMoves++;
             }
 
-            if(isAttack(lastPos - 9, Square[lastPos]).Item1 && !(isAttack(lastPos - 9, Square[lastPos]).Item2) && column != 0)
+            if(row != 0 && isAttack(lastPos - 9, Square[lastPos]).Item1 && !(isAttack(lastPos - 9, Square[lastPos]).Item2) && column != 0)
             {
                 moves[countMoves] = lastPos - 9;
                 countMoves++;
@@ -511,7 +621,7 @@ public class Game : MonoBehaviour
         //black pawns ----------------------------------------------------------------------------------------------------------------------------------------------------
         if (piece >= 17 && piece <= 24)
         {
-            if (!(isAttack(lastPos + 8, Square[lastPos]).Item1))
+            if (row != 7 && !(isAttack(lastPos + 8, Square[lastPos]).Item1))
             {
                 moves[countMoves] = lastPos + 8;
                 countMoves++;
@@ -523,13 +633,13 @@ public class Game : MonoBehaviour
                 countMoves++;
             }
 
-            if (isAttack(lastPos + 7, Square[lastPos]).Item1 && !(isAttack(lastPos + 7, Square[lastPos]).Item2) && column != 0)
+            if (row != 7 && isAttack(lastPos + 7, Square[lastPos]).Item1 && !(isAttack(lastPos + 7, Square[lastPos]).Item2) && column != 0)
             {
                 moves[countMoves] = lastPos + 7;
                 countMoves++;
             }
 
-            if (isAttack(lastPos + 9, Square[lastPos]).Item1 && !(isAttack(lastPos + 9, Square[lastPos]).Item2) && column != 7)
+            if (row != 7 && isAttack(lastPos + 9, Square[lastPos]).Item1 && !(isAttack(lastPos + 9, Square[lastPos]).Item2) && column != 7)
             {
                 moves[countMoves] = lastPos + 9;
                 countMoves++;
@@ -1147,38 +1257,84 @@ public class Game : MonoBehaviour
 
     public int depth = 1;
     private int layer = -1;
-    private int repetitions = 1;
+    private float repetitions = 1;
+    private int movesChecked = 0;
 
     private int thePiece;
     private int theMove;
 
-    int evaluatePos()
+    public Text depthText;
+    public Text positionsText;
+
+
+    float evaluatePos()
     {
-        int gameState = 0;
+        float gameState = 0f;
         for (int x = 0; x < 64; x++)
         {
             if (Square[x] > 0)
             {
                 gameState += pieceValues[Square[x]];
+                if(Square[x] != 0)
+                {
+                    /*if(Square[x] < 17)
+                    {
+                        gameState += (squareMap[x] / 10f);
+                    }
+                    else
+                    {
+                        gameState -= (squareMap[x] / 10f);
+                    }*/
+                }
+             
             }
         }
-        return gameState;
+        return Mathf.Round(gameState * 10f)/10f;
     }
 
     void sendingIt()
     {
-        Debug.Log("WE CHOSE THE MOVE:" + thePiece + "to move to" + theMove);
         Pieces[Square[thePiece]].GetComponent<Piece>().moveHere(theMove);
     }
 
 
 
-    int pickMove(int lastPos, int newPos, int color)
+    float pickMove(int lastPos, int newPos, int color, float alpha, float beta)
     {
         layer++;
+        
 
         int holdMe = Square[newPos];
         Square[newPos] = Square[lastPos];
+
+        if((color == 1) && layer != 0)
+        {
+            if (inCheck("White"))
+            {
+                Square[lastPos] = Square[newPos];
+                Square[newPos] = holdMe;
+
+                layer--;
+
+                movesChecked++;
+
+                return 9999;
+            }
+        }
+        else if ((color == -1) && layer != 0)
+        {
+            if (inCheck("Black"))
+            {
+                Square[lastPos] = Square[newPos];
+                Square[newPos] = holdMe;
+
+                layer--;
+
+                movesChecked++;
+
+                return -9999;
+            }
+        }
 
         if (newPos != lastPos)
         {
@@ -1186,28 +1342,26 @@ public class Game : MonoBehaviour
         }
         
         
-
+    
         if (layer >= depth)
         {
-            int positionScore = evaluatePos();
+            float positionScore = evaluatePos();
             
             Square[lastPos] = Square[newPos];
             Square[newPos] = holdMe;
             
             layer--;
 
-            Debug.Log("Position eva:" + positionScore);
+            movesChecked++;
+
             return positionScore;
         }
 
         int bestPiece = 100;
         int bestMove = 100;
-        int bestScore = color * -100;
+        float bestScore = color * -100;
 
-        Debug.Log("Layer: " + layer);
-        Debug.Log("Bestscore baseline: " + bestScore);
-
-        int lastMove;
+        float lastMove;
 
         for (int x = 0; x < 64; x++)
         {
@@ -1216,48 +1370,67 @@ public class Game : MonoBehaviour
                 int newCount = 0;
                 while(LegalMoves(x)[newCount] != 69)
                 {
-                    Debug.Log("test moves of piece on: " + x);
-                    Debug.Log("testing this piece to: " + LegalMoves(x)[newCount]);
-                    lastMove = pickMove(x, LegalMoves(x)[newCount], color * -1);
-                    
+                    lastMove = pickMove(x, LegalMoves(x)[newCount], color * -1, alpha, beta);
 
-                    if(((lastMove > bestScore) && (color == 1)) || ((lastMove < bestScore) && (color == -1)))
+                    
+                    
+                    /*if(color == 1)
+                    {
+                        alpha = Mathf.Max(alpha, lastMove);
+
+                        if(beta <= alpha)
+                        {
+                            break;
+                        }
+                    }
+
+                    else
+                    {
+                        beta = Mathf.Min(beta, lastMove);
+
+                        if (beta <= alpha)
+                        {
+                            break;
+                        }
+                    }*/
+                    
+                    if(Square[x] == 16 || Square[x] == 32)
+                    {
+                        lastMove -= ((float)color / 2f);
+                    }
+
+                    if (((lastMove > bestScore) && (color == 1)) || ((lastMove < bestScore) && (color == -1)))
                     {
                         repetitions = 1;
 
                         bestPiece = x;
                         bestMove = LegalMoves(x)[newCount];
                         bestScore = lastMove;
-                        Debug.Log("color:  " + color);
-                        Debug.Log("best piece: " + bestPiece);
-                        Debug.Log("best move: " + bestMove);
-                        Debug.Log("best score: " + bestScore);
                     }
 
                     else if(lastMove == bestScore)
                     {
                         repetitions++;
-                        Debug.Log("WE GOT A REPETITON");
                         int chosen = Random.Range(0, 100);
-                        Debug.Log("REPETITIONS: " + repetitions);
-                        Debug.Log("CHOSEN: " + chosen);
-                        Debug.Log(chosen <= ((1 / repetitions) * 100));
 
-                        if (chosen <= ((1/repetitions) * 100)){
+                        if (chosen <= ((1/(repetitions)) * 100)){
                             bestPiece = x;
                             bestMove = LegalMoves(x)[newCount];
                             bestScore = lastMove;
-                            Debug.Log("best piece: " + bestPiece);
-                            Debug.Log("best move: " + bestMove);
-                            Debug.Log("best score: " + bestScore);
                         }
                         
                     }
                     newCount++;
                 }
 
+                
+
             }
+
         }
+
+        
+
         if (newPos != lastPos)
         {
             Square[lastPos] = Square[newPos];
@@ -1269,11 +1442,10 @@ public class Game : MonoBehaviour
         {
             thePiece = bestPiece;
             theMove = bestMove;
-            Debug.Log(bestPiece);
-            Debug.Log(bestMove);
+            Debug.Log("The best piece lies on square: " + bestPiece);
+            Debug.Log("to the following square: " + bestMove);
         }
-
-        return bestPiece;
+        return bestScore;
     }
 
    

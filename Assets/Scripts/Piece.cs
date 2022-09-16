@@ -122,7 +122,6 @@ public class Piece : MonoBehaviour
         lastPosition = getPosition();
         lastLOCATION = transform.position;
 
-        Debug.Log("RECEIVED IT");
         transform.position = numToPos(newSquare);
 
         hereWeGo();
